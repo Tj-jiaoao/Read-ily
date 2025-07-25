@@ -9,8 +9,6 @@
       </button>
     </div>
     
-
-    
     <h2 class="font-bold text-md text-gray-700 dark:text-white mt-6 mb-4 px-6">Reread</h2>
     <div class="whitespace-pre-wrap break-words text-gray-800 dark:text-gray-100 text-base px-6">
       <div v-if="isGeneratingSummary" class="flex items-center justify-center py-8">
@@ -23,7 +21,16 @@
     </div>
     <h2 class="font-bold text-md text-gray-700 dark:text-white mt-6 mb-4 px-6">Relink</h2>
     <div class="whitespace-pre-wrap break-words text-gray-800 dark:text-gray-100 text-base px-6">
-        {{ text }}
+      <div v-if="isLoadingRelink" class="flex items-center justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700 dark:border-gray-300"></div>
+        <span class="ml-3 text-gray-600 dark:text-gray-400">正在搜索知识图谱...</span>
+      </div>
+      <div v-else-if="relinkError" class="text-red-500">
+        {{ relinkError }}
+      </div>
+      <div v-else>
+        {{ relinkResult }}
+      </div>
     </div>
   </aside>
 </template>
@@ -47,6 +54,81 @@ export default {
     visible: {
       type: Boolean,
       default: false
+    }
+  },
+  data() {
+    return {
+      relinkResult: '',
+      relinkError: '',
+      isLoadingRelink: false
+    }
+  },
+  watch: {
+    visible(newVal) {
+      if (newVal) {
+        this.fetchRelinkData()
+      }
+    }
+  },
+  mounted() {
+    if (this.visible) {
+      this.fetchRelinkData()
+    }
+  },
+  methods: {
+    async fetchRelinkData() {
+      this.isLoadingRelink = true
+      this.relinkError = ''
+      
+      try {
+        const formData = new FormData()
+        formData.append('query', 'Machine')
+        formData.append('project_name', 'Deep-Learning')
+        
+        const response = await fetch('http://localhost:5001/search', {
+          method: 'POST',
+          headers: {
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+          body: formData
+        })
+        
+        if (response.status === 200) {
+          const data = await response.json()
+          console.log(data)
+          this.relinkResult = this.formatRelinkResults(data)
+        } else {
+          this.relinkError = `请求失败: ${response.status} ${response.statusText}`
+        }
+      } catch (error) {
+        this.relinkError = `网络错误: ${error.message}`
+      } finally {
+        this.isLoadingRelink = false
+      }
+    },
+    
+    formatRelinkResults(data) {
+      if (!data.results || !Array.isArray(data.results)) {
+        return '暂无搜索结果'
+      }
+      
+      let formattedResult = ''
+      
+      data.results.forEach((item, index) => {
+        formattedResult += `${index + 1}. 【${item.name}】\n`
+        formattedResult += `   索引: ${item.index}\n`
+        
+        // 截取summary的前100个字符，如果超过则添加省略号
+        const summary = item.summary.length > 100 
+          ? item.summary.substring(0, 100) + '...' 
+          : item.summary
+        formattedResult += `   摘要: ${summary}\n\n`
+      })
+      
+      return formattedResult.trim()
     }
   }
 }

@@ -176,6 +176,82 @@
     @close="showSidebar = false"
   />
 
+  <!-- 阅读进度提醒弹窗 -->
+  <div v-if="showReadingProgressModal" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
+      <!-- 弹窗头部 -->
+      <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-white">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white">阅读进度提醒</h2>
+              <p class="text-blue-100 text-sm">继续您的阅读之旅</p>
+            </div>
+          </div>
+          <button @click="closeReadingProgressModal" class="text-white/80 hover:text-white transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 弹窗内容 -->
+      <div class="p-6 space-y-6">
+        <!-- 上次阅读时间 -->
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+          <div class="flex items-center space-x-2 mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500 dark:text-gray-400">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">上次阅读时间</span>
+          </div>
+          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ formatLastReadingTime() }}</p>
+        </div>
+
+        <!-- 上次阅读内容 -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-l-4 border-blue-500">
+          <div class="flex items-center space-x-2 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span class="text-sm font-medium text-blue-600 dark:text-blue-400">上次阅读内容</span>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded p-3 border">
+            <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ lastReadingInfo?.content || '暂无内容' }}</p>
+          </div>
+        </div>
+
+        <!-- 阅读统计 -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ lastReadingInfo?.progress || 0 }}%</div>
+            <div class="text-sm text-green-600 dark:text-green-400">阅读进度</div>
+          </div>
+          <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ lastReadingInfo?.duration || 0 }}分钟</div>
+            <div class="text-sm text-purple-600 dark:text-purple-400">阅读时长</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 弹窗底部 -->
+      <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end space-x-3">
+        <button @click="closeReadingProgressModal" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">
+          稍后查看
+        </button>
+        <button @click="continueReading" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
+          继续阅读
+        </button>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 <script>
@@ -220,6 +296,10 @@ export default {
       noteInputPosition: { x: 0, y: 0 }, // 笔记输入框位置
       currentNoteText: '', // 当前笔记文本
       currentHighlightId: null, // 当前操作的高亮ID
+      // 阅读进度跟踪
+      showReadingProgressModal: false,
+      lastReadingInfo: null,
+      currentReadingContent: '',
     }
   },
   methods: {
@@ -256,6 +336,9 @@ export default {
           this.shouldRestoreHighlights = true;
           this.restoreHighlights();
           this.shouldRestoreHighlights = false;
+          
+          // 检查阅读进度并显示提醒
+          this.checkReadingProgress();
         } else {
           console.error('Book not found in local storage or invalid book data');
           this.$router.push({ name: 'Home' });
@@ -428,6 +511,8 @@ export default {
           this.restoreHighlightsForCurrentPage();
           this.shouldRestoreHighlights = false;
         }, 300);
+        // 保存阅读进度
+        this.saveReadingProgress();
       });
     },
 
@@ -442,6 +527,8 @@ export default {
           this.restoreHighlightsForCurrentPage();
           this.shouldRestoreHighlights = false;
         }, 300);
+        // 保存阅读进度
+        this.saveReadingProgress();
       });
     },
 
@@ -486,7 +573,7 @@ export default {
       }
       this.plainTextContent = text.trim();
       // 提取文本后自动生成摘要
-      // this.generateSummary();
+      this.generateSummary();
     },
     async generateSummary() {
       if (!this.plainTextContent || !this.ai) {
@@ -508,7 +595,7 @@ export default {
         console.error('生成摘要时出错:', error);
         this.summaryText = '生成摘要时出错，请检查网络连接';
       } finally {
-        this.isGeneratingSummary = false;
+        // this.isGeneratingSummary = false;
       }
     },
 
@@ -519,6 +606,8 @@ export default {
           localStorage.setItem(`epub-location-${this.fileName}`, currentLocation.start.cfi);
         }
       }
+      // 同时保存阅读进度
+      this.saveReadingProgress();
     },
 
     displayChapter(href) {
@@ -1410,6 +1499,150 @@ export default {
       this.resizeTimeout = setTimeout(() => {
         this.isResizing = false;
       }, 100);
+    },
+
+    // 阅读进度跟踪方法
+    checkReadingProgress() {
+      const readingKey = `reading-progress-${this.fileName}`;
+      const lastReading = localStorage.getItem(readingKey);
+      
+      if (lastReading) {
+        try {
+          const lastReadingData = JSON.parse(lastReading);
+          const now = new Date();
+          const lastTime = new Date(lastReadingData.timestamp);
+          const timeDiff = now - lastTime;
+          
+          // 如果距离上次阅读超过1小时，显示提醒
+          if (timeDiff >  1000 * 60 * 60) {
+            this.lastReadingInfo = {
+              timestamp: lastReadingData.timestamp,
+              content: lastReadingData.content,
+              progress: lastReadingData.progress,
+              duration: lastReadingData.duration
+            };
+            this.showReadingProgressModal = true;
+          }
+        } catch (error) {
+          console.error('解析阅读进度数据失败:', error);
+        }
+      }
+    },
+
+    saveReadingProgress() {
+      if (!this.rendition) return;
+      
+      try {
+        const currentLocation = this.rendition.currentLocation();
+        if (!currentLocation || !currentLocation.start) return;
+        
+        // 获取当前页面内容
+        const currentContent = this.getCurrentPageContent();
+        
+        // 计算阅读进度（基于CFI位置）
+        const progress = this.calculateReadingProgress();
+        
+        // 计算阅读时长（这里简化处理，实际可以更精确）
+        const duration = this.calculateReadingDuration();
+        
+        const readingData = {
+          timestamp: new Date().toISOString(),
+          cfi: currentLocation.start.cfi,
+          content: currentContent,
+          progress: progress,
+          duration: duration
+        };
+        
+        const readingKey = `reading-progress-${this.fileName}`;
+        localStorage.setItem(readingKey, JSON.stringify(readingData));
+        
+      } catch (error) {
+        console.error('保存阅读进度失败:', error);
+      }
+    },
+
+    getCurrentPageContent() {
+      try {
+        const viewer = document.getElementById('viewer');
+        if (!viewer) return '';
+        
+        const iframes = viewer.getElementsByTagName('iframe');
+        for (let iframe of iframes) {
+          try {
+            const frameDocument = iframe.contentDocument || iframe.contentWindow.document;
+            if (frameDocument) {
+              const textContent = frameDocument.body.textContent || '';
+              // 返回前100个字符
+              return textContent.substring(0, 100).trim() + (textContent.length > 100 ? '...' : '');
+            }
+          } catch (e) {
+            console.log('无法访问iframe内容:', e);
+          }
+        }
+        return '';
+      } catch (error) {
+        console.error('获取当前页面内容失败:', error);
+        return '';
+      }
+    },
+
+    calculateReadingProgress() {
+      try {
+        if (!this.book || !this.rendition) return 0;
+        
+        const currentLocation = this.rendition.currentLocation();
+        if (!currentLocation || !currentLocation.start) return 0;
+        
+        // 获取总章节数
+        const totalChapters = this.book.spine.length;
+        const currentChapter = currentLocation.start.index;
+        
+        // 简化的进度计算（基于章节）
+        return Math.round((currentChapter / totalChapters) * 100);
+      } catch (error) {
+        console.error('计算阅读进度失败:', error);
+        return 0;
+      }
+    },
+
+    calculateReadingDuration() {
+      // 简化的阅读时长计算（这里返回固定值，实际可以基于时间差计算）
+      return 15; // 假设上次阅读了15分钟
+    },
+
+    formatLastReadingTime() {
+      if (!this.lastReadingInfo?.timestamp) return '未知时间';
+      
+      try {
+        const lastTime = new Date(this.lastReadingInfo.timestamp);
+        const now = new Date();
+        const diff = now - lastTime;
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        if (days > 0) {
+          return `${days}天前`;
+        } else if (hours > 0) {
+          return `${hours}小时前`;
+        } else if (minutes > 0) {
+          return `${minutes}分钟前`;
+        } else {
+          return '刚刚';
+        }
+      } catch (error) {
+        return '未知时间';
+      }
+    },
+
+    closeReadingProgressModal() {
+      this.showReadingProgressModal = false;
+    },
+
+    continueReading() {
+      this.closeReadingProgressModal();
+      // 可以在这里添加跳转到上次阅读位置的逻辑
     },
 
   },
