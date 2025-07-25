@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+
+    body {
+      @apply bg-white dark:bg-black text-black dark:text-gray-200;
+    }
+
+
+
+      .delete-icon {
+        background-size: 18px;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #fff;
+      background-image: url('assets/img/bin.svg');
+      color: transparent;
+          width: 30px;
+      height: 30px;
+        border: none;
+        cursor: pointer;
+    }
+    #viewer {
+        transition: opacity 0.3s ease;
+      }
+      
+      #viewer.hidden {
+        opacity: 0;
+      }
+      
+  
+      
+}
