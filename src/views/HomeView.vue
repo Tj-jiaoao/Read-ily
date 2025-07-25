@@ -4,16 +4,53 @@
 
     <div class="drop flex-grow h-full w-full " @dragover.prevent @drop="uploadBooks">
      
-      <div class="content w-full px-4  sm:px-6">
+      <div class="content w-full px-4 sm:px-6">
 
-        <div v-if="books.length === 0" @click="triggerUpload" class="pt-6">
-          <p class="text-xl font-semibold mb-2">Your library is empty.</p>
-          <p class="mb-3">Drop a DRM-free Epub here or click 'Add books' to get started.</p>
-                
-              </div>
-        
-        <div id="bookCatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+        <!-- 主标题和诗意正文 -->
+        <div class="text-center py-12 mb-8">
+          <h1 class="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-6 leading-tight">
+            Reading about:<br>
+            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Hobby and Life
+            </span>
+          </h1>
+          <div class="max-w-3xl mx-auto">
+            <p class="text-lg md:text-xl text-gray-600 dark:text-gray-300 leading-relaxed italic">
+              "To wander pages, to unearth life's poetry in words. Every book, a mark of time; every read, a soul's quiet conversation. Weave passions into living, and plumb the boundless depths of knowledge."
+            </p>
+            <p class="text-base text-gray-500 dark:text-gray-400 mt-4">
+              Here, every book becomes a chapter in your life's own story.
+            </p>
+          </div>
+        </div>
 
+        <!-- 空状态 -->
+        <div v-if="books.length === 0" class="text-center py-16">
+          <div class="max-w-md mx-auto">
+            <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+              </svg>
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-3">你的书架还是空的</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">点击下方的"添加书籍"按钮开始你的阅读之旅</p>
+          </div>
+        </div>
+
+        <!-- 书架标题和书籍列表 -->
+        <div v-else>
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+            📚 Shelf
+          </h2>
+          <div id="bookCatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+
+            <!-- 添加书籍按钮 - 放在第一位 -->
+            <AddBook 
+              :color="getRandomColor()"
+              @upload-books="uploadBooks"
+            />
+
+            <!-- 现有书籍 -->
             <BookThumbnail
               v-for="(book, index) in books"
               :key="index"
@@ -22,6 +59,7 @@
               @delete-book="deleteBook"
             />
 
+          </div>
         </div>
       </div>
     </div>
@@ -37,6 +75,7 @@ import localforage from 'localforage'
 import AppHeader from '@/components/common/Header.vue'
 import AppFooter from '@/components/common/Footer.vue'
 import BookThumbnail from '@/components/common/BookThumbnail.vue'
+import AddBook from '@/components/common/AddBook.vue'
 import AlertToast from '@/components/common/AlertToast.vue'
 
 export default {
@@ -45,6 +84,7 @@ export default {
     AppHeader,
     AppFooter,
     BookThumbnail,
+    AddBook,
     AlertToast
   },
   data() {
@@ -60,12 +100,6 @@ export default {
     }
   },
   methods: {
-    triggerUpload() {
-      document.getElementById('bookInput').click();
-    },
-    handleFileChange(event) {
-      this.$emit('upload-books', event);
-    },
     getRandomColor() {
       return this.colors[Math.floor(Math.random() * this.colors.length)];
     },

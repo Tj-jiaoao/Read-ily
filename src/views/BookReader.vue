@@ -1556,6 +1556,11 @@ export default {
         const readingKey = `reading-progress-${this.fileName}`;
         localStorage.setItem(readingKey, JSON.stringify(readingData));
         
+        // 触发进度更新事件
+        window.dispatchEvent(new CustomEvent('reading-progress-updated', {
+          detail: { fileName: this.fileName }
+        }));
+        
       } catch (error) {
         console.error('保存阅读进度失败:', error);
       }
