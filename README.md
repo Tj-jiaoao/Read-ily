@@ -80,6 +80,7 @@ Read-ily 是一个革命性的智能阅读与知识管理平台，专为深度�
 - **EPUB.js 0.3.93** - 电子书解析和渲染引擎
 - **LocalForage 1.10.0** - 本地数据存储解决方案
 
+  
 ### 开发工具
 - **Vue CLI 5.0** - Vue.js开发工具链
 - **ESLint** - 代码质量检查
@@ -90,7 +91,7 @@ Read-ily 是一个革命性的智能阅读与知识管理平台，专为深度�
 ### AI与数据处理
 - **Google Generative AI** - 智能内容生成和分析
 - **Vis.js Network** - 知识图谱可视化
-- **知识图谱算法** - Graphitti
+- **知识图谱算法** - Graphitti以及子模块 https://github.com/BillHan01/graph-service.git 
 
 ---
 
