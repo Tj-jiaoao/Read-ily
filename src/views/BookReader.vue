@@ -517,10 +517,15 @@
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
-              <span class="text-sm font-medium text-blue-600 dark:text-blue-400">上次阅读内容</span>
+              <span class="text-sm font-medium text-blue-600 dark:text-blue-400">上次阅读总结</span>
             </div>
-            <div class="bg-white dark:bg-gray-800 rounded p-3 border">
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ lastReadingInfo?.content || '暂无内容' }}</p>
+            <div class="bg-white dark:bg-gray-800 rounded p-3 border min-h-[48px]">
+              <template v-if="isGeneratingGeminiSummary">
+                <span class="text-gray-400 dark:text-gray-500">AI总结生成中...</span>
+              </template>
+              <template v-else>
+                <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ lastReadingSummary || '暂无总结' }}</p>
+              </template>
             </div>
           </div>
 
@@ -586,7 +591,7 @@ export default {
       currentChapterId: '', // 当前章节ID
       currentAbortController: null, // 当前API请求的AbortController
       bookTitle: '', // 书籍标题
-      geminiApiKey: 'AIzaSyApSPRUXb055LaIbQrmtb5LNUxMR12rvec', // 用户需要填写自己的API key
+      geminiApiKey: process.env.VUE_APP_GEMINI_API_KEY, // 用户需要填写自己的API key
       ai: null, // GoogleGenAI 实例
       showContextMenu: false,
       contextMenuPosition: { x: 0, y: 0 },
@@ -621,6 +626,8 @@ export default {
       chatMessages: [], // 聊天消息
       currentChatMessage: '', // 当前输入的消息
       isSendingMessage: false, // 是否正在发送消息
+      lastReadingSummary: '', // 新增：上次阅读总结
+      isGeneratingGeminiSummary: false, // 新增：Gemini生成状态
     }
   },
   methods: {
@@ -999,7 +1006,7 @@ export default {
       try {
         // 使用AbortController包装API请求
         const response = await this.ai.models.generateContent({
-          model: "gemini-2.5-pro",
+          model: "gemini-2.0-flash-exp",
           contents: `Summarize those content within 100 words:\n\n${this.plainTextContent}`
         }, {
           signal: currentController.signal
@@ -2255,13 +2262,14 @@ export default {
           const timeDiff = now - lastTime;
           
           // 如果距离上次阅读超过1小时，显示提醒
-          if (timeDiff >  1000 * 60 * 60) {
+          if (timeDiff >  1000) {
             this.lastReadingInfo = {
               timestamp: lastReadingData.timestamp,
               content: lastReadingData.content,
               progress: lastReadingData.progress,
               duration: lastReadingData.duration
             };
+            console.log("lastReadingInfo", this.lastReadingInfo)
             this.showReadingProgressModal = true;
           }
         } catch (error) {
@@ -2498,7 +2506,7 @@ export default {
 Content: ${this.plainTextContent.substring(0, 2000)}`;
 
         const response = await this.ai.models.generateContent({
-          model: "gemini-2.5-pro",
+          model: "gemini-2.0-flash-exp",
           contents: prompt
         });
 
@@ -2723,7 +2731,7 @@ Content: ${this.plainTextContent.substring(0, 2000)}`;
         const prompt = `${context}\n\n用户问题：${userMessage}\n\n请用中文回答，回答要简洁明了。`;
 
         const response = await this.ai.models.generateContent({
-          model: "gemini-2.5-pro",
+          model: "gemini-2.0-flash-exp",
           contents: prompt
         });
 
@@ -2764,6 +2772,26 @@ Content: ${this.plainTextContent.substring(0, 2000)}`;
       return `${hours}:${minutes}`;
     },
 
+    async generateGeminiSummary(content) {
+      this.isGeneratingGeminiSummary = true;
+      this.lastReadingSummary = '';
+      try {
+        if (!this.ai) {
+          this.ai = new GoogleGenAI(this.geminiApiKey);
+        }
+        const prompt = `请用简洁的语言总结以下阅读内容的要点，突出核心信息和主要脉络(100字内）：\n${content}`;
+        const result = await this.ai.models.generateContent({
+          model: "gemini-2.0-flash-exp",
+          contents: prompt
+        });
+        this.lastReadingSummary = result.text;
+      } catch (e) {
+        this.lastReadingSummary = 'AI总结生成失败';
+      } finally {
+        this.isGeneratingGeminiSummary = false;
+      }
+    },
+
   },
 
   watch: {
@@ -2774,6 +2802,11 @@ Content: ${this.plainTextContent.substring(0, 2000)}`;
         }
       },
       immediate: true,
+    },
+    showReadingProgressModal(val) {
+      if (val && this.lastReadingInfo?.content) {
+        this.generateGeminiSummary(this.lastReadingInfo.content)
+      }
     },
   },
 
