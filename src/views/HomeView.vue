@@ -54,9 +54,14 @@
 
         <!-- Shelf 视图 -->
         <div v-if="currentView === 'shelf'">
+          <!-- 书架标题 -->
+          <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+            📚 Shelf
+          </h2>
+
           <!-- 空状态 -->
           <div v-if="books.length === 0" class="text-center py-16">
-            <div class="max-w-md mx-auto">
+            <div class="max-w-md mx-auto mb-8">
               <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -67,29 +72,22 @@
             </div>
           </div>
 
-          <!-- 书架标题和书籍列表 -->
-          <div v-else>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-              📚 Shelf
-            </h2>
-            <div id="bookCatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+          <!-- 书籍列表 -->
+          <div id="bookCatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
+            <!-- 添加书籍按钮 - 始终显示 -->
+            <AddBook 
+              :color="getRandomColor()"
+              @upload-books="uploadBooks"
+            />
 
-              <!-- 添加书籍按钮 - 放在第一位 -->
-              <AddBook 
-                :color="getRandomColor()"
-                @upload-books="uploadBooks"
-              />
-
-              <!-- 现有书籍 -->
-              <BookThumbnail
-                v-for="(book, index) in books"
-                :key="index"
-                :book="book"
-                @open-book="openBook"
-                @delete-book="deleteBook"
-              />
-
-            </div>
+            <!-- 现有书籍 -->
+            <BookThumbnail
+              v-for="(book, index) in books"
+              :key="index"
+              :book="book"
+              @open-book="openBook"
+              @delete-book="deleteBook"
+            />
           </div>
         </div>
 
