@@ -104,7 +104,7 @@ Read-ily 是一个革命性的智能阅读与知识管理平台，专为深度�
 
 1. **克隆项目**
 ```bash
-git clone https://github.com/your-username/Read-ily.git
+git clone https://github.com/Tj-jiaoao/Read-ily
 cd Read-ily
 ```
 
