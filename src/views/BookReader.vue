@@ -12,7 +12,7 @@
   <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25A2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
 </svg>
 </button> 
-        <button @click="showSidebar = true" class="ml-2 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center" title="AI Summary">
+        <button @click="openSidebarWithSummary" class="ml-2 p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 flex items-center justify-center" title="AI Summary">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15.75l.394 1.183a2.25 2.25 0 001.423 1.423L19.5 18.75l-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
           </svg>
@@ -24,232 +24,234 @@
 
  
 
-    <div id="viewer" class="scrolled max-w-4xl ml-auto mr-auto mb-20"  :class="{ 'hidden': isResizing }"></div>
-    <div @click="goPrev" class="text-transparent fixed top-0 left-0 h-screen w-12 lg:w-20 bg-transparent flex flex-col hover:cursor-pointer bg-[url('assets/img/back.svg')] dark:bg-[url('assets/img/back-white.svg')] bg-no-repeat bg-[center_left_10px]">
-      Prev
-    </div>
-
-    <div @click="goNext" class="text-transparent fixed top-0 right-0 h-screen w-12 lg:w-20 bg-transparent flex flex-col hover:cursor-pointer bg-[url('assets/img/forward.svg')] dark:bg-[url('assets/img/forward-white.svg')] bg-no-repeat bg-[center_right_10px]">
-      Next
-    </div>
-
-    <!-- 上下文菜单 -->
-    <div 
-      v-show="showContextMenu" 
-      :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
-      class="context-menu fixed z-[5000] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-2"
-    >
-      <!-- 调试信息 -->
-      <div class="text-xs text-gray-500 mb-1">showContextMenu: {{ showContextMenu }}</div>
-      
-      <!-- 新建高亮按钮 -->
-      <button 
-        v-if="!isHoveringHighlight"
-        @click="highlightSelection"
-        class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
-        </svg>
-        高亮
-      </button>
-      
-      <!-- 添加笔记按钮 -->
-      <button 
-        v-if="!isHoveringHighlight"
-        @click="showNoteInputDialog"
-        class="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded w-full"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-        </svg>
-        添加笔记
-      </button>
-      
-      <!-- 笔记显示区域 -->
-      <div 
-        v-if="isHoveringHighlight && getHighlightNote(hoveredHighlightId)"
-        class="px-3 py-2 border-t border-gray-200 dark:border-gray-600 mt-1"
-      >
-        <div class="text-xs text-gray-500 mb-1 font-medium">📝 笔记</div>
-        <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border-l-2 border-blue-500">
-          {{ getHighlightNote(hoveredHighlightId) }}
-        </div>
+    <div class="book-content" :class="{ 'with-sidebar': showSidebar }">
+      <div id="viewer" class="scrolled max-w-4xl ml-auto mr-auto mb-20"  :class="{ 'hidden': isResizing }"></div>
+      <div @click="goPrev" class="text-transparent fixed top-0 left-0 h-screen w-12 lg:w-20 bg-transparent flex flex-col hover:cursor-pointer bg-[url('assets/img/back.svg')] dark:bg-[url('assets/img/back-white.svg')] bg-no-repeat bg-[center_left_10px]">
+        Prev
       </div>
-      
-      <!-- 删除高亮按钮 -->
-      <button 
-        v-if="isHoveringHighlight && hoveredHighlightId"
-        @click="removeHighlight(hoveredHighlightId)"
-        class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full mt-1"
+      <div @click="goNext" class="text-transparent fixed top-0 right-0 h-screen w-12 lg:w-20 bg-transparent flex flex-col hover:cursor-pointer bg-[url('assets/img/forward.svg')] dark:bg-[url('assets/img/forward-white.svg')] bg-no-repeat bg-[center_right_10px]">
+        Next
+      </div>
+      <!-- 上下文菜单 -->
+      <div 
+        v-show="showContextMenu" 
+        :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
+        class="context-menu fixed z-[5000] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-2"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        删除高亮
-      </button>
-    </div>
-    
-    <!-- 笔记输入框 -->
-    <div 
-      v-if="showNoteInput"
-      :style="{ left: noteInputPosition.x + 'px', top: noteInputPosition.y + 'px' }"
-      class="note-input fixed z-[5001] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px]"
-    >
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200">添加笔记</h3>
+        <!-- 调试信息 -->
+        <div class="text-xs text-gray-500 mb-1">showContextMenu: {{ showContextMenu }}</div>
+        
+        <!-- 新建高亮按钮 -->
         <button 
-          @click="hideNoteInput"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          v-if="!isHoveringHighlight"
+          @click="highlightSelection"
+          class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded w-full"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672 13.684 16.6m0 0-2.51 2.225.569-9.47 5.227 7.917-3.286-.672ZM12 2.25V4.5m5.834.166-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243-1.59-1.59" />
           </svg>
+          高亮
         </button>
-      </div>
-      
-      <div class="mb-3">
-        <div class="text-xs text-gray-500 mb-2">选中文本：</div>
-        <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border">
-          {{ selectedText }}
-        </div>
-      </div>
-      
-      <div class="mb-4">
-        <label class="block text-xs text-gray-500 mb-2">笔记内容：</label>
-        <textarea 
-          v-model="currentNoteText"
-          @keydown.ctrl.enter="saveNote"
-          placeholder="输入你的笔记..."
-          class="w-full h-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-        ></textarea>
-      </div>
-      
-      <div class="flex justify-end gap-2">
+        
+        <!-- 添加笔记按钮 -->
         <button 
-          @click="hideNoteInput"
-          class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          v-if="!isHoveringHighlight"
+          @click="showNoteInputDialog"
+          class="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded w-full"
         >
-          取消
-        </button>
-        <button 
-          @click="saveNote"
-          class="px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
-        >
-          保存
-        </button>
-      </div>
-    </div>
-    
-
- 
-
-    <div id="hs-overlay-right" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-xs w-full z-[4800] bg-white border-s dark:bg-neutral-800 dark:border-neutral-700" tabindex="-1">
-      <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
-        <h3 class="font-bold text-gray-800 dark:text-white">
-          Contents
-        </h3>
-        <button type="button" class="flex justify-center items-center size-7 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-neutral-700" data-hs-overlay="#hs-overlay-right">
-          <span class="sr-only">Close modal</span>
-          <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18"></path>
-            <path d="m6 6 12 12"></path>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
           </svg>
+          添加笔记
         </button>
-      </div>
-      <div class="p-4">
-        <ul id="toc" class="space-y-2">
-          <li v-for="(chapter, index) in toc" :key="index">
-            <a href="#" @click.prevent="displayChapter(chapter.href, true)" class="text-blue-600 hover:text-blue-800">
-              {{ chapter.label }}
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  
-  <CommonSidebar 
-    :text="plainTextContent" 
-    :summary="summaryText" 
-    :isGeneratingSummary="isGeneratingSummary" 
-    :visible="showSidebar" 
-    @close="showSidebar = false"
-  />
-
-  <!-- 阅读进度提醒弹窗 -->
-  <div v-if="showReadingProgressModal" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
-      <!-- 弹窗头部 -->
-      <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-white">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-            </div>
-            <div>
-              <h2 class="text-xl font-bold text-white">阅读进度提醒</h2>
-              <p class="text-blue-100 text-sm">继续您的阅读之旅</p>
-            </div>
+        
+        <!-- 笔记显示区域 -->
+        <div 
+          v-if="isHoveringHighlight && getHighlightNote(hoveredHighlightId)"
+          class="px-3 py-2 border-t border-gray-200 dark:border-gray-600 mt-1"
+        >
+          <div class="text-xs text-gray-500 mb-1 font-medium">📝 笔记</div>
+          <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border-l-2 border-blue-500">
+            {{ getHighlightNote(hoveredHighlightId) }}
           </div>
-          <button @click="closeReadingProgressModal" class="text-white/80 hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+        </div>
+        
+        <!-- 删除高亮按钮 -->
+        <button 
+          v-if="isHoveringHighlight && hoveredHighlightId"
+          @click="removeHighlight(hoveredHighlightId)"
+          class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full mt-1"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          删除高亮
+        </button>
+      </div>
+      
+      <!-- 笔记输入框 -->
+      <div 
+        v-if="showNoteInput"
+        :style="{ left: noteInputPosition.x + 'px', top: noteInputPosition.y + 'px' }"
+        class="note-input fixed z-[5001] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px]"
+      >
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200">添加笔记</h3>
+          <button 
+            @click="hideNoteInput"
+            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-      </div>
-
-      <!-- 弹窗内容 -->
-      <div class="p-6 space-y-6">
-        <!-- 上次阅读时间 -->
-        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-          <div class="flex items-center space-x-2 mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500 dark:text-gray-400">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">上次阅读时间</span>
-          </div>
-          <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ formatLastReadingTime() }}</p>
-        </div>
-
-        <!-- 上次阅读内容 -->
-        <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-l-4 border-blue-500">
-          <div class="flex items-center space-x-2 mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-            <span class="text-sm font-medium text-blue-600 dark:text-blue-400">上次阅读内容</span>
-          </div>
-          <div class="bg-white dark:bg-gray-800 rounded p-3 border">
-            <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ lastReadingInfo?.content || '暂无内容' }}</p>
+        
+        <div class="mb-3">
+          <div class="text-xs text-gray-500 mb-2">选中文本：</div>
+          <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border">
+            {{ selectedText }}
           </div>
         </div>
-
-        <!-- 阅读统计 -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ lastReadingInfo?.progress || 0 }}%</div>
-            <div class="text-sm text-green-600 dark:text-green-400">阅读进度</div>
-          </div>
-          <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
-            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ lastReadingInfo?.duration || 0 }}分钟</div>
-            <div class="text-sm text-purple-600 dark:text-purple-400">阅读时长</div>
-          </div>
+        
+        <div class="mb-4">
+          <label class="block text-xs text-gray-500 mb-2">笔记内容：</label>
+          <textarea 
+            v-model="currentNoteText"
+            @keydown.ctrl.enter="saveNote"
+            placeholder="输入你的笔记..."
+            class="w-full h-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+          ></textarea>
+        </div>
+        
+        <div class="flex justify-end gap-2">
+          <button 
+            @click="hideNoteInput"
+            class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          >
+            取消
+          </button>
+          <button 
+            @click="saveNote"
+            class="px-3 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded"
+          >
+            保存
+          </button>
         </div>
       </div>
+      
 
-      <!-- 弹窗底部 -->
-      <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end space-x-3">
-        <button @click="closeReadingProgressModal" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">
-          稍后查看
-        </button>
-        <button @click="continueReading" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
-          继续阅读
-        </button>
+   
+
+      <div id="hs-overlay-right" class="hs-overlay hs-overlay-open:translate-x-0 hidden translate-x-full fixed top-0 end-0 transition-all duration-300 transform h-full max-w-xs w-full z-[4800] bg-white border-s dark:bg-neutral-800 dark:border-neutral-700" tabindex="-1">
+        <div class="flex justify-between items-center py-3 px-4 border-b dark:border-neutral-700">
+          <h3 class="font-bold text-gray-800 dark:text-white">
+            Contents
+          </h3>
+          <button type="button" class="flex justify-center items-center size-7 text-sm font-semibold rounded-full border border-transparent text-gray-800 hover:bg-gray-100 disabled:opacity-50 disabled:pointer-events-none dark:text-white dark:hover:bg-neutral-700" data-hs-overlay="#hs-overlay-right">
+            <span class="sr-only">Close modal</span>
+            <svg class="flex-shrink-0 size-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-4">
+          <ul id="toc" class="space-y-2">
+            <li v-for="(chapter, index) in toc" :key="index">
+              <a href="#" @click.prevent="displayChapter(chapter.href, true)" class="text-blue-600 hover:text-blue-800">
+                {{ chapter.label }}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    
+    <CommonSidebar 
+      ref="sidebar"
+      :text="plainTextContent" 
+      :summary="summaryText" 
+      :isGeneratingSummary="isGeneratingSummary" 
+      :visible="showSidebar" 
+      @close="closeSidebarWithCancel"
+    />
+
+    <!-- 阅读进度提醒弹窗 -->
+    <div v-if="showReadingProgressModal" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
+        <!-- 弹窗头部 -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-white">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-white">阅读进度提醒</h2>
+                <p class="text-blue-100 text-sm">继续您的阅读之旅</p>
+              </div>
+            </div>
+            <button @click="closeReadingProgressModal" class="text-white/80 hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 弹窗内容 -->
+        <div class="p-6 space-y-6">
+          <!-- 上次阅读时间 -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <div class="flex items-center space-x-2 mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-500 dark:text-gray-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-sm font-medium text-gray-600 dark:text-gray-300">上次阅读时间</span>
+            </div>
+            <p class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ formatLastReadingTime() }}</p>
+          </div>
+
+          <!-- 上次阅读内容 -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border-l-4 border-blue-500">
+            <div class="flex items-center space-x-2 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-blue-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <span class="text-sm font-medium text-blue-600 dark:text-blue-400">上次阅读内容</span>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded p-3 border">
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ lastReadingInfo?.content || '暂无内容' }}</p>
+            </div>
+          </div>
+
+          <!-- 阅读统计 -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ lastReadingInfo?.progress || 0 }}%</div>
+              <div class="text-sm text-green-600 dark:text-green-400">阅读进度</div>
+            </div>
+            <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-center">
+              <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ lastReadingInfo?.duration || 0 }}分钟</div>
+              <div class="text-sm text-purple-600 dark:text-purple-400">阅读时长</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 弹窗底部 -->
+        <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-end space-x-3">
+          <button @click="closeReadingProgressModal" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors">
+            稍后查看
+          </button>
+          <button @click="continueReading" class="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium">
+            继续阅读
+          </button>
+        </div>
       </div>
     </div>
+
   </div>
 
 </template>
@@ -282,6 +284,9 @@ export default {
       plainTextContent: '',
       summaryText: '',
       isGeneratingSummary: false,
+      currentChapterId: '', // 当前章节ID
+      currentAbortController: null, // 当前API请求的AbortController
+      bookTitle: '', // 书籍标题
       geminiApiKey: 'AIzaSyApSPRUXb055LaIbQrmtb5LNUxMR12rvec', // 用户需要填写自己的API key
       ai: null, // GoogleGenAI 实例
       showContextMenu: false,
@@ -324,6 +329,7 @@ export default {
           const metadata = await this.book.loaded.metadata;
           const fullTitle = metadata.title;
           const truncatedTitle = fullTitle.split(':')[0].trim();
+          this.bookTitle = truncatedTitle; // 保存书籍标题
           document.getElementById('book-title').textContent = truncatedTitle;
 
           // 初始化 GoogleGenAI 实例
@@ -429,6 +435,7 @@ export default {
 
       this.rendition.on("relocated", (location) => {
         localStorage.setItem(`epub-location-${this.fileName}`, location.start.cfi);
+        // 不再在这里更新章节ID，只在翻页时更新
       });
     },
     convertAllCapsHeadings(doc) {
@@ -502,8 +509,19 @@ export default {
 
     goNext(event) {
       event.preventDefault();
+      
+      // 取消当前摘要请求
+      this.cancelCurrentSummaryRequest();
+      
       this.rendition.next();
       this.$nextTick(() => {
+        // 更新当前章节ID
+        const currentLocation = this.rendition.currentLocation();
+        if (currentLocation && currentLocation.start) {
+          this.currentChapterId = this.generateChapterId(currentLocation);
+          console.log('翻页后章节ID更新:', this.currentChapterId);
+        }
+        
         this.extractPlainText();
         // 翻页后延迟恢复高亮，避免干扰翻页
         setTimeout(() => {
@@ -518,8 +536,19 @@ export default {
 
     goPrev(event) {
       event.preventDefault();
+      
+      // 取消当前摘要请求
+      this.cancelCurrentSummaryRequest();
+      
       this.rendition.prev();
       this.$nextTick(() => {
+        // 更新当前章节ID
+        const currentLocation = this.rendition.currentLocation();
+        if (currentLocation && currentLocation.start) {
+          this.currentChapterId = this.generateChapterId(currentLocation);
+          console.log('翻页后章节ID更新:', this.currentChapterId);
+        }
+        
         this.extractPlainText();
         // 翻页后延迟恢复高亮，避免干扰翻页
         setTimeout(() => {
@@ -542,6 +571,14 @@ export default {
         const savedLocation = localStorage.getItem(`epub-location-${this.fileName}`);
         const currentSectionIndex = savedLocation || undefined;
         await this.rendition.display(currentSectionIndex);
+        
+        // 设置当前章节ID
+        const currentLocation = this.rendition.currentLocation();
+        if (currentLocation && currentLocation.start) {
+          this.currentChapterId = this.generateChapterId(currentLocation);
+          console.log('初始章节ID设置:', this.currentChapterId);
+        }
+        
         // 切换章节时也提取纯文本
         this.extractPlainText();
       } catch (error) {
@@ -572,30 +609,135 @@ export default {
         text = viewer.innerText;
       }
       this.plainTextContent = text.trim();
-      // 提取文本后自动生成摘要
-      this.generateSummary();
+      // 如果边栏开启，就检查摘要（添加延迟等待内容更新）
+      if (this.showSidebar) {
+        // 延迟检查摘要，等待内容完全更新
+        setTimeout(() => {
+          this.checkCurrentChapterSummary();
+        }, 500);
+      }
     },
-    async generateSummary() {
-      if (!this.plainTextContent || !this.ai) {
-        this.summaryText = '请先设置Gemini API Key';
+    // 检查当前章节摘要
+    checkCurrentChapterSummary() {
+      // 重新获取当前章节ID，确保获取到最新的
+      const currentLocation = this.rendition.currentLocation();
+      if (currentLocation && currentLocation.start) {
+        this.currentChapterId = this.generateChapterId(currentLocation);
+        console.log('延迟检查摘要，更新章节ID:', this.currentChapterId);
+      }
+      
+      if (!this.currentChapterId) {
+        console.log('当前章节ID未设置，跳过摘要检查');
         return;
       }
       
+      // 设置生成中状态
       this.isGeneratingSummary = true;
       this.summaryText = '';
       
+      // 尝试从本地存储加载当前章节的摘要
+      const summary = this.loadChapterSummary(this.currentChapterId);
+      
+      if (summary) {
+        // 如果找到已保存的摘要，延时1秒后显示
+        console.log('已加载章节摘要:', this.currentChapterId);
+        setTimeout(async () => {
+          this.summaryText = summary;
+          this.isGeneratingSummary = false;
+          
+          // 发送摘要到API
+          const result = await this.submitSummaryToAPI(summary);
+          if (result.success) {
+            console.log('已保存摘要发送到API成功');
+          } else {
+            console.error('已保存摘要发送到API失败:', result.error);
+          }
+          
+          // 摘要显示完成后，搜索相关知识点
+          await this.searchWithSummary(summary);
+        }, 1000);
+      } else {
+        // 如果没有找到摘要，生成新的
+        console.log('未找到章节摘要，开始生成:', this.currentChapterId);
+        this.generateSummary();
+      }
+    },
+
+    async generateSummary() {
+      if (!this.plainTextContent || !this.ai) {
+        this.summaryText = '请先设置Gemini API Key';
+        this.isGeneratingSummary = false;
+        return;
+      }
+      
+      // 取消之前的请求
+      this.cancelCurrentSummaryRequest();
+      
+      // 创建新的AbortController
+      this.currentAbortController = new AbortController();
+      const currentController = this.currentAbortController;
+      const currentChapterId = this.currentChapterId;
+      
+      console.log('开始生成摘要，章节ID:', currentChapterId);
+      
       try {
+        // 使用AbortController包装API请求
         const response = await this.ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: `请总结以下内容，100字以内：\n\n${this.plainTextContent}`
+          model: "gemini-2.5-pro",
+          contents: `Summarize those content within 100 words:\n\n${this.plainTextContent}`
+        }, {
+          signal: currentController.signal
         });
-        console.log(response.text)
+        
+        // 检查请求是否已被取消
+        if (currentController.signal.aborted) {
+          console.log('摘要生成请求已被取消，章节ID:', currentChapterId);
+          return;
+        }
+        
+        // 检查章节ID是否仍然匹配
+        if (this.currentChapterId !== currentChapterId) {
+          console.log('章节已切换，忽略旧的摘要结果，章节ID:', currentChapterId);
+          return;
+        }
+        
+        console.log('摘要生成完成，章节ID:', currentChapterId);
         this.summaryText = response.text;
+        
+        // 保存当前章节的摘要
+        this.saveChapterSummary(this.currentChapterId, response.text);
+        
+        // 发送新生成的摘要到API
+        const result = await this.submitSummaryToAPI(response.text);
+        if (result.success) {
+          console.log('新生成摘要发送到API成功');
+        } else {
+          console.error('新生成摘要发送到API失败:', result.error);
+        }
+        
+        // 摘要生成完成后，搜索相关知识点
+        await this.searchWithSummary(response.text);
       } catch (error) {
+        // 检查是否是取消错误
+        if (error.name === 'AbortError') {
+          console.log('摘要生成请求已被取消（AbortError），章节ID:', currentChapterId);
+          return;
+        }
+        
+        // 检查章节ID是否仍然匹配
+        if (this.currentChapterId !== currentChapterId) {
+          console.log('章节已切换，忽略错误结果，章节ID:', currentChapterId);
+          return;
+        }
+        
         console.error('生成摘要时出错:', error);
         this.summaryText = '生成摘要时出错，请检查网络连接';
       } finally {
-        // this.isGeneratingSummary = false;
+        // 只有当前控制器仍然匹配时才重置状态
+        if (this.currentAbortController === currentController) {
+          this.isGeneratingSummary = false;
+          this.currentAbortController = null;
+        }
       }
     },
 
@@ -612,9 +754,19 @@ export default {
 
     displayChapter(href) {
       if (this.rendition) {
+        // 取消当前摘要请求
+        this.cancelCurrentSummaryRequest();
+        
         this.closeSidebar();  
         this.rendition.display(href);
         this.$nextTick(() => {
+          // 更新当前章节ID
+          const currentLocation = this.rendition.currentLocation();
+          if (currentLocation && currentLocation.start) {
+            this.currentChapterId = this.generateChapterId(currentLocation);
+            console.log('切换章节ID更新:', this.currentChapterId);
+          }
+          
           this.extractPlainText();
           // 跳转章节后延迟恢复高亮
           setTimeout(() => {
@@ -639,6 +791,113 @@ export default {
         window.HSOverlay.close(document.querySelector('#hs-overlay-right'));
       } else {
         console.warn('HSOverlay not found. Make sure the library is properly loaded.');
+      }
+    },
+
+    // 打开边栏并处理摘要
+    openSidebarWithSummary() {
+      // 显示边栏
+      this.showSidebar = true;
+      
+      // 如果当前已经有文本内容，延迟检查摘要
+      if (this.plainTextContent) {
+        setTimeout(() => {
+          this.checkCurrentChapterSummary();
+        }, 500);
+      }
+    },
+
+    // 关闭边栏并取消摘要请求
+    closeSidebarWithCancel() {
+      // 取消当前摘要请求
+      this.cancelCurrentSummaryRequest();
+      
+      // 关闭边栏
+      this.showSidebar = false;
+    },
+
+    // 发送摘要到API
+    async submitSummaryToAPI(summary) {
+      try {
+        const formData = new FormData();
+        formData.append('project_name', 'Hobby and Life');
+        formData.append('article_title', this.bookTitle);
+        formData.append('summary', summary);
+        formData.append('chapter', this.currentChapterId);
+
+        console.log('发送摘要到API:', {
+          project_name: 'Hobby and Life',
+          article_title: this.bookTitle,
+          summary: summary,
+          chapter: this.currentChapterId
+        });
+
+        const response = await fetch('http://localhost:5001/submitsummary', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          body: formData
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('摘要提交成功:', result);
+          return { success: true, data: result };
+        } else {
+          console.error('摘要提交失败:', response.status, response.statusText);
+          return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+      } catch (error) {
+        console.error('发送摘要到API时出错:', error);
+        return { success: false, error: error.message };
+      }
+    },
+
+    // 搜索相关知识点
+    async searchWithSummary(summary) {
+      if (!summary || !this.$refs.sidebar) {
+        console.log('摘要为空或sidebar未找到，跳过搜索');
+        return;
+      }
+
+      console.log('开始搜索相关知识点，摘要长度:', summary.length);
+      
+      // 设置sidebar的加载状态
+      this.$refs.sidebar.setRelinkLoading(true);
+      
+      try {
+        const formData = new FormData();
+        const limitedQuery = summary.length > 200 ? summary.substring(0, 200) + '...' : summary;
+        formData.append('query', limitedQuery);
+        formData.append('project_name', 'Hobby and Life');
+        
+        const response = await fetch('http://localhost:5001/search', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          body: formData
+        });
+        
+        if (response.status === 200) {
+          const data = await response.json();
+          console.log('搜索成功，结果数量:', data.results ? data.results.length : 0);
+          // 更新sidebar的搜索结果
+          this.$refs.sidebar.updateRelinkResults(data);
+        } else {
+          console.error('搜索请求失败:', response.status, response.statusText);
+          this.$refs.sidebar.setRelinkError(`请求失败: ${response.status} ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('搜索时出错:', error);
+        this.$refs.sidebar.setRelinkError(`网络错误: ${error.message}`);
       }
     },
 
@@ -1034,7 +1293,7 @@ export default {
           try {
             const frameDocument = iframe.contentDocument;
             if (frameDocument) {
-              console.log('检查iframe:', iframe);
+              // console.log('检查iframe:', iframe);
               
               // 检查是否已经存在这个高亮
               const existingHighlight = frameDocument.querySelector(`[data-highlight-id="${highlightInfo.id}"]`);
@@ -1650,6 +1909,93 @@ export default {
       // 可以在这里添加跳转到上次阅读位置的逻辑
     },
 
+    // 保存章节摘要到本地存储
+    saveChapterSummary(chapterId, summaryText) {
+      try {
+        const summaryKey = `summary_${this.fileName}_${chapterId}`;
+        const summaryData = {
+          text: summaryText,
+          timestamp: new Date().toISOString(),
+          bookId: this.fileName,
+          chapterId: chapterId
+        };
+        localStorage.setItem(summaryKey, JSON.stringify(summaryData));
+        console.log('章节摘要已保存:', chapterId);
+      } catch (error) {
+        console.error('保存章节摘要失败:', error);
+      }
+    },
+
+    // 从本地存储加载章节摘要
+    loadChapterSummary(chapterId) {
+      try {
+        const summaryKey = `summary_${this.fileName}_${chapterId}`;
+        const summaryData = localStorage.getItem(summaryKey);
+        
+        if (summaryData) {
+          const parsedData = JSON.parse(summaryData);
+          console.log('找到章节摘要:', chapterId);
+          return parsedData.text;
+        } else {
+          console.log('未找到章节摘要:', chapterId);
+          return null;
+        }
+      } catch (error) {
+        console.error('加载章节摘要失败:', error);
+        return null;
+      }
+    },
+
+    // 取消当前摘要请求
+    cancelCurrentSummaryRequest() {
+      if (this.currentAbortController) {
+        console.log('取消当前摘要请求');
+        this.currentAbortController.abort();
+        this.currentAbortController = null;
+        this.isGeneratingSummary = false;
+        this.summaryText = '';
+      }
+    },
+
+    // 生成精确的章节ID
+    generateChapterId(location) {
+      try {
+        if (!location || !location.start) {
+          return null;
+        }
+
+        // 使用多个标识符组合生成唯一的章节ID
+        const href = location.start.href || '';
+        const cfi = location.start.cfi || '';
+        const index = location.start.index || 0;
+        
+        // 提取章节文件名（去掉路径和扩展名）
+        let chapterName = '';
+        if (href) {
+          const urlParts = href.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          chapterName = fileName.split('.')[0]; // 去掉扩展名
+        }
+        
+        // 组合生成章节ID
+        const chapterId = `${chapterName}_${index}`;
+        
+        console.log('生成章节ID详情:', {
+          href,
+          cfi: cfi.substring(0, 20),
+          index,
+          chapterName,
+          finalId: chapterId
+        });
+        
+        return chapterId;
+      } catch (error) {
+        console.error('生成章节ID失败:', error);
+        // 备用方案：使用CFI的前20个字符
+        return location.start.cfi ? location.start.cfi.substring(0, 20) : 'unknown';
+      }
+    },
+
   },
 
   watch: {
@@ -1735,5 +2081,21 @@ export default {
 </script>
 
 <style scoped>
-/* Tailwind classes are used instead of custom styles */
+.book-content {
+  transition: margin-right 0.3s cubic-bezier(0.4,0,0.2,1), max-width 0.3s cubic-bezier(0.4,0,0.2,1);
+  margin-right: 0;
+  max-width: 100vw;
+  margin-left: auto;
+  margin-right: auto;
+}
+.book-content.with-sidebar {
+  margin-right: 384px; /* Sidebar宽度w-96*/
+  max-width: calc(100vw - 384px);
+}
+@media (max-width: 900px) {
+  .book-content.with-sidebar {
+    margin-right: 0;
+    max-width: 100vw;
+  }
+}
 </style>
