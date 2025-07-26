@@ -107,6 +107,7 @@ Read-ily 是一个革命性的智能阅读与知识管理平台，专为深度�
 git clone https://github.com/Tj-jiaoao/Read-ily
 cd Read-ily
 ```
+> ps: 请确认Gemini API Key相关环境变量已配置
 
 2. **安装依赖**
 ```bash
@@ -127,6 +128,7 @@ npm run build
 ```bash
 npm run lint
 ```
+
 
 ## 🎨 功能演示
 
