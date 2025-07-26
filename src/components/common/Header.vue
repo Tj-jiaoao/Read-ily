@@ -3,7 +3,7 @@
   <header class="flex sticky top-0 justify-start flex-nowrap z-50 w-full bg-white/90  backdrop-blur-md text-sm py-3 dark:bg-black/90 ">
     <nav class="relative w-full px-4 items-center justify-between sm:px-6" aria-label="Global">
       <div class="flex items-center justify-between">
-        <a class="text-lg font-semibold" href="#" aria-label="Brand">
+        <router-link to="/" class="text-lg font-semibold" aria-label="Brand">
           
           <svg width="80" viewBox="0 0 41 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M33.4443 19V12.7188H35.1553V13.8145H35.1904C35.3779 13.041 35.8877 12.5898 36.6201 12.5898C36.8076 12.5898 36.9834 12.6191 37.1123 12.6543V14.1602C36.9717 14.1016 36.7373 14.0664 36.4912 14.0664C35.6475 14.0664 35.1553 14.5703 35.1553 15.4844V19H33.4443Z" fill="currentColor"/>
@@ -20,9 +20,7 @@
             <path d="M11.4229 1.91016C10.9072 1.91016 10.5088 1.50586 10.5088 1.01953C10.5088 0.533203 10.9072 0.128906 11.4229 0.128906C11.9385 0.128906 12.3369 0.533203 12.3369 1.01953C12.3369 1.50586 11.9385 1.91016 11.4229 1.91016ZM10.5674 9V2.71875H12.2783V9H10.5674Z" fill="currentColor"/>
             <path d="M0.703125 9V0.544922H2.74805L5.15039 6.62109H5.18555L7.58789 0.544922H9.63281V9H8.05664V3.28125H8.00391L5.72461 9H4.61133L2.32617 3.28125H2.2793V9H0.703125Z" fill="currentColor"/>
           </svg>
-
-        
-        </a>
+        </router-link>
 
       </div>
       

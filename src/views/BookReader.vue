@@ -17,6 +17,16 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423L16.5 15.75l.394 1.183a2.25 2.25 0 001.423 1.423L19.5 18.75l-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
           </svg>
         </button>
+        <button @click="generateQuiz" class="ml-2 p-2 rounded-full bg-blue-200 dark:bg-blue-700 text-blue-700 dark:text-blue-200 hover:bg-blue-300 dark:hover:bg-blue-600 flex items-center justify-center" title="小测试" :disabled="isGeneratingQuiz">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+          </svg>
+        </button>
+        <button @click="openChatSidebar" class="ml-2 p-2 rounded-full bg-green-200 dark:bg-green-700 text-green-700 dark:text-green-200 hover:bg-green-300 dark:hover:bg-green-600 flex items-center justify-center" title="AI聊天">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+          </svg>
+        </button>
       </div>
     </nav>
 
@@ -24,7 +34,7 @@
 
  
 
-    <div class="book-content" :class="{ 'with-sidebar': showSidebar }">
+    <div class="book-content" :class="{ 'with-sidebar': showSidebar, 'with-chat-sidebar': showChatSidebar }">
       <div id="viewer" class="scrolled max-w-4xl ml-auto mr-auto mb-20"  :class="{ 'hidden': isResizing }"></div>
       <div @click="goPrev" class="text-transparent fixed top-0 left-0 h-screen w-12 lg:w-20 bg-transparent flex flex-col hover:cursor-pointer bg-[url('assets/img/back.svg')] dark:bg-[url('assets/img/back-white.svg')] bg-no-repeat bg-[center_left_10px]">
         Prev
@@ -37,6 +47,7 @@
         v-show="showContextMenu" 
         :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
         class="context-menu fixed z-[5000] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-2"
+        @mouseenter="contextMenuHovering = true" @mouseleave="handleContextMenuLeave"
       >
         <!-- 调试信息 -->
         <div class="text-xs text-gray-500 mb-1">showContextMenu: {{ showContextMenu }}</div>
@@ -69,6 +80,7 @@
         <div 
           v-if="isHoveringHighlight && getHighlightNote(hoveredHighlightId)"
           class="px-3 py-2 border-t border-gray-200 dark:border-gray-600 mt-1"
+          @mouseenter="contextMenuHovering = true" @mouseleave="handleContextMenuLeave"
         >
           <div class="text-xs text-gray-500 mb-1 font-medium">📝 笔记</div>
           <div class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-2 rounded border-l-2 border-blue-500">
@@ -76,11 +88,25 @@
           </div>
         </div>
         
+        <!-- Relink按钮 -->
+        <button 
+          v-if="isHoveringHighlight && hoveredHighlightId"
+          @click="showRelinkForHighlight"
+          class="flex items-center gap-2 px-3 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 rounded w-full mt-1"
+          @mouseenter="contextMenuHovering = true" @mouseleave="handleContextMenuLeave"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+          Relink
+        </button>
+        
         <!-- 删除高亮按钮 -->
         <button 
           v-if="isHoveringHighlight && hoveredHighlightId"
           @click="removeHighlight(hoveredHighlightId)"
           class="flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded w-full mt-1"
+          @mouseenter="contextMenuHovering = true" @mouseleave="handleContextMenuLeave"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -94,6 +120,7 @@
         v-if="showNoteInput"
         :style="{ left: noteInputPosition.x + 'px', top: noteInputPosition.y + 'px' }"
         class="note-input fixed z-[5001] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px]"
+        @mouseenter="noteInputHovering = true" @mouseleave="handleNoteInputLeave"
       >
         <div class="flex justify-between items-center mb-3">
           <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200">添加笔记</h3>
@@ -175,6 +202,276 @@
       :visible="showSidebar" 
       @close="closeSidebarWithCancel"
     />
+
+    <!-- 聊天边栏 -->
+    <div v-if="showChatSidebar" class="fixed top-0 right-0 h-full w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-2xl z-[5000] flex flex-col">
+      <!-- 聊天头部 -->
+      <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-500 to-blue-500">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">AI助手</h3>
+            <p class="text-green-100 text-sm">基于Gemini的智能对话</p>
+          </div>
+        </div>
+        <button @click="closeChatSidebar" class="text-white/80 hover:text-white transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 聊天消息区域 -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-4" ref="chatMessagesContainer">
+        <!-- 欢迎消息 -->
+        <div v-if="chatMessages.length === 0" class="text-center py-8">
+          <div class="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 text-white">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">欢迎使用AI助手</h3>
+          <p class="text-gray-600 dark:text-gray-400 text-sm">我可以帮助您理解当前章节的内容，回答相关问题，或者进行其他讨论。</p>
+        </div>
+
+        <!-- 聊天消息 -->
+        <div v-for="(message, index) in chatMessages" :key="index" class="flex" :class="message.isUser ? 'justify-end' : 'justify-start'">
+          <div class="max-w-[80%]">
+            <!-- 用户消息 -->
+            <div v-if="message.isUser" class="bg-blue-500 text-white rounded-2xl rounded-br-md px-4 py-2 shadow-sm">
+              <p class="text-sm">{{ message.content }}</p>
+              <p class="text-xs text-blue-100 mt-1">{{ formatTime(message.timestamp) }}</p>
+            </div>
+            
+            <!-- AI消息 -->
+            <div v-else class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md px-4 py-2 shadow-sm">
+              <p class="text-sm whitespace-pre-wrap">{{ message.content }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ formatTime(message.timestamp) }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载状态 -->
+        <div v-if="isSendingMessage" class="flex justify-start">
+          <div class="max-w-[80%]">
+            <div class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md px-4 py-2 shadow-sm">
+              <div class="flex items-center space-x-2">
+                <div class="flex space-x-1">
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                  <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+                <span class="text-xs text-gray-500 dark:text-gray-400">AI正在思考...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+        <div class="flex space-x-2">
+          <input
+            v-model="currentChatMessage"
+            @keydown.enter="sendMessage"
+            type="text"
+            placeholder="输入您的问题..."
+            class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            :disabled="isSendingMessage"
+          />
+          <button
+            @click="sendMessage"
+            :disabled="!currentChatMessage.trim() || isSendingMessage"
+            class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relink弹窗 -->
+    <RelinkModal
+      :visible="showRelinkModal"
+      :isLoading="relinkModalLoading"
+      :error="relinkModalError"
+      :results="relinkModalResults"
+      @close="closeRelinkModal"
+    />
+
+    <!-- Quiz弹窗 -->
+    <div v-if="showQuizModal" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 overflow-hidden border border-gray-200 dark:border-gray-700">
+        <!-- 弹窗头部 -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-white">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl font-bold text-white">章节小测试</h2>
+                <p class="text-blue-100 text-sm">测试您对本章内容的理解</p>
+              </div>
+            </div>
+            <button @click="closeQuizModal" class="text-white/80 hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 弹窗内容 -->
+        <div class="p-6">
+          <!-- 加载状态 -->
+          <div v-if="isGeneratingQuiz" class="text-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-300">正在生成小测试...</p>
+          </div>
+
+          <!-- Quiz内容 -->
+          <div v-else-if="quizData.length > 0 && !quizCompleted" class="space-y-6">
+            <!-- 进度条 -->
+            <div class="flex items-center justify-between mb-6">
+              <div class="text-sm text-gray-600 dark:text-gray-300">
+                问题 {{ currentQuizIndex + 1 }} / {{ quizData.length }}
+              </div>
+              <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" :style="{ width: ((currentQuizIndex + 1) / quizData.length * 100) + '%' }"></div>
+              </div>
+            </div>
+
+            <!-- 当前问题 -->
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                {{ quizData[currentQuizIndex].question }}
+              </h3>
+              
+              <!-- 选项 -->
+              <div class="space-y-3">
+                <button
+                  v-for="(choice, index) in quizData[currentQuizIndex].choices"
+                  :key="index"
+                  @click="selectAnswer(index)"
+                  :class="[
+                    'w-full text-left p-4 rounded-lg border-2 transition-all duration-200',
+                    userAnswers[currentQuizIndex] === index
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-300'
+                  ]"
+                >
+                  <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center"
+                         :class="userAnswers[currentQuizIndex] === index ? 'border-blue-500 bg-blue-500' : 'border-gray-300 dark:border-gray-600'">
+                      <span v-if="userAnswers[currentQuizIndex] === index" class="text-white text-xs">✓</span>
+                    </div>
+                    <span class="font-medium mr-2">{{ String.fromCharCode(65 + index) }}.</span>
+                    <span>{{ choice }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- 导航按钮 -->
+            <div class="flex justify-between">
+              <button
+                @click="previousQuestion"
+                :disabled="currentQuizIndex === 0"
+                class="px-6 py-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                上一题
+              </button>
+              
+              <button
+                v-if="currentQuizIndex < quizData.length - 1"
+                @click="nextQuestion"
+                :disabled="userAnswers[currentQuizIndex] === undefined"
+                class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                下一题
+              </button>
+              
+              <button
+                v-else
+                @click="submitQuiz"
+                :disabled="userAnswers[currentQuizIndex] === undefined"
+                class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                提交答案
+              </button>
+            </div>
+          </div>
+
+          <!-- 结果页面 -->
+          <div v-else-if="quizCompleted" class="flex flex-col py-4" style="min-height:40vh;max-height:70vh;">
+            <div class="mb-4">
+              <div class="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                   :class="quizScore >= 2 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'">
+                <svg v-if="quizScore >= 2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-green-600 dark:text-green-400">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-red-600 dark:text-red-400">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                {{ quizScore >= 2 ? '恭喜！' : '继续加油！' }}
+              </h3>
+              <p class="text-gray-600 dark:text-gray-300">
+                您的得分：{{ quizScore }}/{{ quizData.length }}
+              </p>
+            </div>
+
+            <!-- 详细结果内容可滚动 -->
+            <div class="flex-1 overflow-y-auto max-h-[40vh] space-y-4 mb-2 pr-2">
+              <div v-for="(quiz, index) in quizData" :key="index" class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                <div class="flex items-start justify-between mb-1">
+                  <h4 class="font-medium text-gray-800 dark:text-gray-200">问题 {{ index + 1 }}</h4>
+                  <div class="flex items-center">
+                    <span v-if="userAnswers[index] === quiz.correctAnswer" class="text-green-600 dark:text-green-400 text-sm font-medium">✓ 正确</span>
+                    <span v-else class="text-red-600 dark:text-red-400 text-sm font-medium">✗ 错误</span>
+                  </div>
+                </div>
+                <p class="text-gray-700 dark:text-gray-300 mb-2">{{ quiz.question }}</p>
+                <div class="space-y-1">
+                  <div v-for="(choice, choiceIndex) in quiz.choices" :key="choiceIndex"
+                       :class="[
+                         'text-sm p-2 rounded',
+                         choiceIndex === quiz.correctAnswer
+                           ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                           : choiceIndex === userAnswers[index] && choiceIndex !== quiz.correctAnswer
+                           ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                           : 'text-gray-600 dark:text-gray-400'
+                       ]">
+                    <span class="font-medium">{{ String.fromCharCode(65 + choiceIndex) }}.</span> {{ choice }}
+                    <span v-if="choiceIndex === quiz.correctAnswer" class="ml-2 text-xs">(正确答案)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 操作按钮固定在底部 -->
+            <div class="flex justify-center space-x-4 border-t pt-4 mt-2 bg-white dark:bg-gray-800 sticky bottom-0 z-10">
+              <button @click="retakeQuiz" class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                重新测试
+              </button>
+              <button @click="closeQuizModal" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- 阅读进度提醒弹窗 -->
     <div v-if="showReadingProgressModal" class="fixed inset-0 z-[6000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -260,12 +557,14 @@
 import ePub from 'epubjs'
 import localforage from 'localforage'
 import CommonSidebar from '../components/common/Sidebar.vue'
+import RelinkModal from '../components/common/RelinkModal.vue'
 import { GoogleGenAI } from '@google/genai'
 
 export default {
   name: 'BookReader',
   components: {
-    CommonSidebar
+    CommonSidebar,
+    RelinkModal
   },
   props: {
     fileName: {
@@ -305,6 +604,23 @@ export default {
       showReadingProgressModal: false,
       lastReadingInfo: null,
       currentReadingContent: '',
+      contextMenuHovering: false, // 鼠标是否在菜单上
+      noteInputHovering: false, // 鼠标是否在笔记输入框上
+      showRelinkModal: false, // 是否显示Relink弹窗
+      relinkModalLoading: false, // Relink弹窗加载状态
+      relinkModalError: '', // Relink弹窗错误信息
+      relinkModalResults: [], // Relink弹窗搜索结果
+      isGeneratingQuiz: false, // 是否正在生成小测试
+      showQuizModal: false, // 是否显示Quiz弹窗
+      quizData: [], // Quiz数据
+      currentQuizIndex: 0, // 当前Quiz索引
+      userAnswers: [], // 用户答案
+      quizCompleted: false, // Quiz是否完成
+      quizScore: 0, // Quiz得分
+      showChatSidebar: false, // 是否显示聊天边栏
+      chatMessages: [], // 聊天消息
+      currentChatMessage: '', // 当前输入的消息
+      isSendingMessage: false, // 是否正在发送消息
     }
   },
   methods: {
@@ -832,7 +1148,7 @@ export default {
           chapter: this.currentChapterId
         });
 
-        const response = await fetch('http://localhost:5001/submitsummary', {
+        const response = await fetch('https://graph-service.zeabur.app/submitsummary', {
           method: 'POST',
           headers: {
             'Accept': 'application/json, text/plain, */*',
@@ -875,7 +1191,7 @@ export default {
         formData.append('query', limitedQuery);
         formData.append('project_name', 'Hobby and Life');
         
-        const response = await fetch('http://localhost:5001/search', {
+        const response = await fetch('https://graph-service.zeabur.app/search', {
           method: 'POST',
           headers: {
             'Accept': 'application/json, text/plain, */*',
@@ -899,6 +1215,129 @@ export default {
         console.error('搜索时出错:', error);
         this.$refs.sidebar.setRelinkError(`网络错误: ${error.message}`);
       }
+    },
+
+    // 发送笔记到API
+    async submitNoteToAPI(origin, comment) {
+      try {
+        const formData = new FormData();
+        formData.append('project_name', 'Hobby and Life');
+        formData.append('article_title', this.bookTitle || 'Unknown Book');
+        formData.append('origin', origin);
+        formData.append('comment', comment || '');
+        
+        console.log('发送笔记到API:', {
+          project_name: 'Hobby and Life',
+          article_title: this.bookTitle,
+          origin: origin,
+          comment: comment
+        });
+
+        const response = await fetch('https://graph-service.zeabur.app/submitnote', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          body: formData
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('笔记提交成功:', result);
+          return { success: true, data: result };
+        } else {
+          console.error('笔记提交失败:', response.status, response.statusText);
+          return { success: false, error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+      } catch (error) {
+        console.error('发送笔记到API时出错:', error);
+        return { success: false, error: error.message };
+      }
+    },
+
+    // 显示高亮的Relink弹窗
+    async showRelinkForHighlight() {
+      if (!this.hoveredHighlightId) {
+        console.log('没有高亮ID，无法显示Relink');
+        return;
+      }
+
+      // 获取高亮信息
+      const highlight = this.highlights.find(h => h.id === this.hoveredHighlightId);
+      if (!highlight) {
+        console.log('未找到高亮信息');
+        return;
+      }
+
+      // 显示弹窗并开始搜索
+      this.showRelinkModal = true;
+      this.relinkModalLoading = true;
+      this.relinkModalError = '';
+      this.relinkModalResults = [];
+
+      // 构建搜索查询：原文 + 笔记（如果有）
+      let searchQuery = highlight.text;
+      if (highlight.note) {
+        searchQuery += ' ' + highlight.note;
+      }
+
+      console.log('开始Relink搜索，查询:', searchQuery);
+
+      try {
+        const formData = new FormData();
+        const limitedQuery = searchQuery.length > 200 ? searchQuery.substring(0, 200) + '...' : searchQuery;
+        formData.append('query', limitedQuery);
+        formData.append('project_name', 'Hobby and Life');
+        
+        const response = await fetch('https://graph-service.zeabur.app/search', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
+          },
+          body: formData
+        });
+        
+        if (response.status === 200) {
+          const data = await response.json();
+          console.log('Relink搜索成功，结果数量:', data.results ? data.results.length : 0);
+          this.relinkModalResults = this.formatRelinkResults(data);
+        } else {
+          console.error('Relink搜索请求失败:', response.status, response.statusText);
+          this.relinkModalError = `请求失败: ${response.status} ${response.statusText}`;
+        }
+      } catch (error) {
+        console.error('Relink搜索时出错:', error);
+        this.relinkModalError = `网络错误: ${error.message}`;
+      } finally {
+        this.relinkModalLoading = false;
+      }
+    },
+
+    // 关闭Relink弹窗
+    closeRelinkModal() {
+      this.showRelinkModal = false;
+      this.relinkModalLoading = false;
+      this.relinkModalError = '';
+      this.relinkModalResults = [];
+    },
+
+    // 格式化Relink结果
+    formatRelinkResults(data) {
+      if (!data.results || !Array.isArray(data.results)) {
+        return [];
+      }
+      return data.results.map((item, index) => ({
+        name: item.name,
+        index: item.index,
+        summary: item.summary,
+        id: index
+      }));
     },
 
     goHome() {
@@ -992,11 +1431,12 @@ export default {
 
     hideNoteInput() {
       this.showNoteInput = false;
+      this.showContextMenu = false; // 同时隐藏上下文菜单
       this.currentNoteText = '';
       this.currentHighlightId = null;
     },
 
-    saveNote() {
+    async saveNote() {
       if (!this.currentNoteText.trim()) {
         return; // 如果没有笔记内容，不保存
       }
@@ -1009,8 +1449,12 @@ export default {
           // 创建高亮并保存笔记
           this.createHighlightWithNote(range, this.currentNoteText);
           
-          // 隐藏笔记输入框
+          // 发送笔记到API
+          await this.submitNoteToAPI(text, this.currentNoteText);
+          
+          // 隐藏笔记输入框和上下文菜单
           this.hideNoteInput();
+          this.showContextMenu = false;
           
           // 清除选择
           const selection = range.startContainer.ownerDocument.defaultView.getSelection();
@@ -1045,6 +1489,12 @@ export default {
         // 保存高亮信息
         this.saveHighlight(range, highlightId);
         
+        // 发送高亮到API（comment为空）
+        const text = range.toString();
+        if (text) {
+          this.submitNoteToAPI(text, '');
+        }
+        
         console.log('高亮创建成功，ID:', highlightId);
       } catch (error) {
         console.error('创建高亮失败:', error);
@@ -1068,6 +1518,12 @@ export default {
             
             // 保存高亮信息
             this.saveHighlight(range2, highlightId);
+            
+            // 发送高亮到API（comment为空）
+            const text = range2.toString();
+            if (text) {
+              this.submitNoteToAPI(text, '');
+            }
             
             console.log('备用高亮方法成功，ID:', highlightId);
           }
@@ -1580,13 +2036,32 @@ export default {
     },
 
     handleHighlightLeave() {
-      // 延迟隐藏，给用户时间点击菜单
       setTimeout(() => {
-        if (!this.showContextMenu) {
+        if (!this.contextMenuHovering && !this.noteInputHovering) {
           this.isHoveringHighlight = false;
           this.hoveredHighlightId = null;
+          this.showContextMenu = false;
+          this.showNoteInput = false;
         }
-      }, 100);
+      }, 200);
+    },
+
+    handleContextMenuLeave() {
+      this.contextMenuHovering = false;
+      setTimeout(() => {
+        if (!this.isHoveringHighlight && !this.contextMenuHovering && !this.noteInputHovering) {
+          this.showContextMenu = false;
+        }
+      }, 200);
+    },
+
+    handleNoteInputLeave() {
+      this.noteInputHovering = false;
+      setTimeout(() => {
+        if (!this.isHoveringHighlight && !this.contextMenuHovering && !this.noteInputHovering) {
+          this.showNoteInput = false;
+        }
+      }, 200);
     },
 
     getSelectedRangeFromIframe() {
@@ -1617,6 +2092,13 @@ export default {
 
     handleTextSelection(event) {
       console.log("handleTextSelection", event)
+      
+      // 只处理左键点击 (button === 0)
+      if (event.button !== 0) {
+        console.log("非左键点击，忽略");
+        return;
+      }
+      
       setTimeout(() => {
         // 获取选中的文本，支持iframe
         const selectedText = this.getSelectedTextFromIframe();
@@ -1996,6 +2478,292 @@ export default {
       }
     },
 
+    async generateQuiz() {
+      if (!this.plainTextContent || !this.ai) {
+        alert('请先设置Gemini API Key或等待内容加载完成');
+        return;
+      }
+
+      this.isGeneratingQuiz = true;
+      this.showQuizModal = true;
+      this.quizData = [];
+      this.currentQuizIndex = 0;
+      this.userAnswers = [];
+      this.quizCompleted = false;
+      this.quizScore = 0;
+
+      try {
+        const prompt = `In order for me to better understand the content of the chapter, please give me 3 quizes, each with 3 choices. with the format: Question: ...... ||Choices: A......,B....,C....||Correct:A/B/C.
+
+Content: ${this.plainTextContent.substring(0, 2000)}`;
+
+        const response = await this.ai.models.generateContent({
+          model: "gemini-2.5-pro",
+          contents: prompt
+        });
+
+        const quizText = response.text;
+        console.log('Quiz生成结果:', quizText);
+
+        // 解析Quiz数据
+        this.quizData = this.parseQuizResponse(quizText);
+        
+        if (this.quizData.length === 0) {
+          throw new Error('无法解析Quiz数据');
+        }
+
+        console.log('解析后的Quiz数据:', this.quizData);
+
+      } catch (error) {
+        console.error('生成Quiz失败:', error);
+        alert('生成Quiz失败，请重试');
+        this.closeQuizModal();
+      } finally {
+        this.isGeneratingQuiz = false;
+      }
+    },
+
+    parseQuizResponse(responseText) {
+      const quizzes = [];
+      
+      // 尝试多种解析方式
+      // const patterns = [
+      //   // 模式1: Question: ... || Choices: A...,B...,C... || Correct: A/B/C
+      //   /Question:\s*(.+?)\s*\|\|\s*Choices:\s*(A[^,]+),?\s*(B[^,]+),?\s*(C[^,]+)\s*\|\|\s*Correct:\s*(A|B|C)/gi,
+        
+      //   // 模式2: 分别匹配
+      //   /Question:\s*(.+?)(?=\s*Choices:|$)/gi,
+      //   /Choices:\s*(A[^,]+),?\s*(B[^,]+),?\s*(C[^,]+)/gi,
+      //   /Correct:\s*(A|B|C)/gi
+      // ];
+      
+      // 首先尝试模式1（完整匹配）
+      let match;
+      const fullPattern = /Question:\s*(.+?)\s*\|\|\s*Choices:\s*(A[^,]+),?\s*(B[^,]+),?\s*(C[^,]+)\s*\|\|\s*Correct:\s*(A|B|C)/gi;
+      
+      while ((match = fullPattern.exec(responseText)) !== null) {
+        const question = match[1].trim();
+        const choiceA = match[2].trim();
+        const choiceB = match[3].trim();
+        const choiceC = match[4].trim();
+        const correct = match[5].trim();
+        
+        const correctMap = { 'A': 0, 'B': 1, 'C': 2 };
+        
+        quizzes.push({
+          question: question,
+          choices: [choiceA, choiceB, choiceC],
+          correctAnswer: correctMap[correct]
+        });
+      }
+      
+      // 如果模式1没有找到，尝试模式2（分别匹配）
+      if (quizzes.length === 0) {
+        const lines = responseText.split('\n');
+        let currentQuiz = null;
+        
+        for (let line of lines) {
+          line = line.trim();
+          if (!line) continue;
+          
+          // 匹配问题
+          if (line.startsWith('Question:')) {
+            if (currentQuiz && currentQuiz.choices.length === 3 && currentQuiz.correctAnswer !== null) {
+              quizzes.push(currentQuiz);
+            }
+            currentQuiz = {
+              question: line.replace('Question:', '').trim(),
+              choices: [],
+              correctAnswer: null
+            };
+          }
+          // 匹配选项
+          else if (line.startsWith('Choices:')) {
+            const choicesText = line.replace('Choices:', '').trim();
+            // 更灵活的选项分割
+            const choices = choicesText.split(/[,，]/).map(c => c.trim()).filter(c => c);
+            if (currentQuiz && choices.length >= 3) {
+              currentQuiz.choices = choices.slice(0, 3);
+            }
+          }
+          // 匹配正确答案
+          else if (line.startsWith('Correct:')) {
+            const correctText = line.replace('Correct:', '').trim();
+            if (currentQuiz) {
+              const correctMap = { 'A': 0, 'B': 1, 'C': 2 };
+              currentQuiz.correctAnswer = correctMap[correctText];
+            }
+          }
+        }
+        
+        // 添加最后一个quiz
+        if (currentQuiz && currentQuiz.choices.length === 3 && currentQuiz.correctAnswer !== null) {
+          quizzes.push(currentQuiz);
+        }
+      }
+      
+      // 如果还是没有找到，尝试更宽松的匹配
+      if (quizzes.length === 0) {
+        const questionMatches = responseText.match(/Question:\s*(.+?)(?=\s*Choices:|$)/gi);
+        const choiceMatches = responseText.match(/Choices:\s*(.+?)(?=\s*Correct:|$)/gi);
+        const correctMatches = responseText.match(/Correct:\s*(A|B|C)/gi);
+        
+        if (questionMatches && choiceMatches && correctMatches) {
+          const minLength = Math.min(questionMatches.length, choiceMatches.length, correctMatches.length);
+          
+          for (let i = 0; i < minLength; i++) {
+            const question = questionMatches[i].replace('Question:', '').trim();
+            const choicesText = choiceMatches[i].replace('Choices:', '').trim();
+            const choices = choicesText.split(/[,，]/).map(c => c.trim()).filter(c => c).slice(0, 3);
+            const correct = correctMatches[i].replace('Correct:', '').trim();
+            
+            if (choices.length === 3) {
+              const correctMap = { 'A': 0, 'B': 1, 'C': 2 };
+              quizzes.push({
+                question: question,
+                choices: choices,
+                correctAnswer: correctMap[correct]
+              });
+            }
+          }
+        }
+      }
+      
+      console.log('解析结果:', quizzes);
+      return quizzes;
+    },
+
+    selectAnswer(choiceIndex) {
+      this.userAnswers[this.currentQuizIndex] = choiceIndex;
+    },
+
+    nextQuestion() {
+      if (this.currentQuizIndex < this.quizData.length - 1) {
+        this.currentQuizIndex++;
+      }
+    },
+
+    previousQuestion() {
+      if (this.currentQuizIndex > 0) {
+        this.currentQuizIndex--;
+      }
+    },
+
+    submitQuiz() {
+      // 计算得分
+      let score = 0;
+      for (let i = 0; i < this.quizData.length; i++) {
+        if (this.userAnswers[i] === this.quizData[i].correctAnswer) {
+          score++;
+        }
+      }
+      
+      this.quizScore = score;
+      this.quizCompleted = true;
+    },
+
+    retakeQuiz() {
+      this.currentQuizIndex = 0;
+      this.userAnswers = [];
+      this.quizCompleted = false;
+      this.quizScore = 0;
+    },
+
+    closeQuizModal() {
+      this.showQuizModal = false;
+      this.isGeneratingQuiz = false;
+      this.quizData = [];
+      this.currentQuizIndex = 0;
+      this.userAnswers = [];
+      this.quizCompleted = false;
+      this.quizScore = 0;
+    },
+
+    // 聊天相关方法
+    openChatSidebar() {
+      this.showChatSidebar = true;
+      // 如果边栏已打开，关闭它
+      if (this.showSidebar) {
+        this.closeSidebarWithCancel();
+      }
+    },
+
+    closeChatSidebar() {
+      this.showChatSidebar = false;
+    },
+
+    async sendMessage() {
+      if (!this.currentChatMessage.trim() || this.isSendingMessage) {
+        return;
+      }
+
+      const userMessage = this.currentChatMessage.trim();
+      
+      // 添加用户消息
+      this.chatMessages.push({
+        content: userMessage,
+        isUser: true,
+        timestamp: new Date()
+      });
+
+      // 清空输入框
+      this.currentChatMessage = '';
+      
+      // 设置发送状态
+      this.isSendingMessage = true;
+
+      // 滚动到底部
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
+
+      try {
+        // 构建上下文，包含当前章节内容
+        const context = this.plainTextContent ? `当前章节内容：${this.plainTextContent.substring(0, 1000)}` : '';
+        const prompt = `${context}\n\n用户问题：${userMessage}\n\n请用中文回答，回答要简洁明了。`;
+
+        const response = await this.ai.models.generateContent({
+          model: "gemini-2.5-pro",
+          contents: prompt
+        });
+
+        // 添加AI回复
+        this.chatMessages.push({
+          content: response.text,
+          isUser: false,
+          timestamp: new Date()
+        });
+
+      } catch (error) {
+        console.error('发送消息失败:', error);
+        // 添加错误消息
+        this.chatMessages.push({
+          content: '抱歉，我遇到了一些问题，请稍后再试。',
+          isUser: false,
+          timestamp: new Date()
+        });
+      } finally {
+        this.isSendingMessage = false;
+        // 滚动到底部
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
+      }
+    },
+
+    scrollToBottom() {
+      if (this.$refs.chatMessagesContainer) {
+        this.$refs.chatMessagesContainer.scrollTop = this.$refs.chatMessagesContainer.scrollHeight;
+      }
+    },
+
+    formatTime(timestamp) {
+      const date = new Date(timestamp);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    },
+
   },
 
   watch: {
@@ -2090,6 +2858,10 @@ export default {
 }
 .book-content.with-sidebar {
   margin-right: 384px; /* Sidebar宽度w-96*/
+  max-width: calc(100vw - 384px);
+}
+.book-content.with-chat-sidebar {
+  margin-right: 384px; /* Chat Sidebar宽度w-96*/
   max-width: calc(100vw - 384px);
 }
 @media (max-width: 900px) {

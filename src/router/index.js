@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import LandingPage from '../views/LandingPage.vue'
 import HomeView from '../views/HomeView.vue'
 import BookReader from '../views/BookReader.vue'
 
@@ -9,6 +10,11 @@ if (typeof window.HSStaticMethods === 'undefined') {
 const routes = [
   {
     path: '/',
+    name: 'Landing',
+    component: LandingPage
+  },
+  {
+    path: '/home',
     name: 'Home',
     component: HomeView
   },
