@@ -60,7 +60,7 @@
           </h2>
 
           <!-- 空状态 -->
-          <div v-if="books.length === 0" class="text-center py-16">
+          <!-- <div v-if="books.length === 0" class="text-center py-16">
             <div class="max-w-md mx-auto mb-8">
               <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12 text-gray-400">
@@ -70,7 +70,7 @@
               <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-3">你的书架还是空的</h2>
               <p class="text-gray-600 dark:text-gray-300 mb-6">点击下方的"添加书籍"按钮开始你的阅读之旅</p>
             </div>
-          </div>
+          </div> -->
 
           <!-- 书籍列表 -->
           <div id="bookCatalog" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
